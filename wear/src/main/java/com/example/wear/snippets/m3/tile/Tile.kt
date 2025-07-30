@@ -16,12 +16,19 @@
 
 package com.example.wear.snippets.m3.tile
 
+import android.content.Context
+import androidx.wear.protolayout.DeviceParametersBuilders
+import androidx.wear.protolayout.DimensionBuilders.expand
+import androidx.wear.protolayout.LayoutElementBuilders
 import androidx.wear.protolayout.ResourceBuilders.Resources
 import androidx.wear.protolayout.TimelineBuilders.Timeline
+import androidx.wear.protolayout.material3.PrimaryLayoutMargins
 import androidx.wear.protolayout.material3.Typography.BODY_LARGE
 import androidx.wear.protolayout.material3.materialScope
 import androidx.wear.protolayout.material3.primaryLayout
 import androidx.wear.protolayout.material3.text
+import androidx.wear.protolayout.material3.textButton
+import androidx.wear.protolayout.modifiers.clickable
 import androidx.wear.protolayout.types.layoutString
 import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.RequestBuilders.ResourcesRequest
@@ -40,13 +47,7 @@ class MyTileService : TileService() {
                 .setResourcesVersion(RESOURCES_VERSION)
                 .setTileTimeline(
                     Timeline.fromLayoutElement(
-                        materialScope(this, requestParams.deviceConfiguration) {
-                            primaryLayout(
-                                mainSlot = {
-                                    text("Hello, World!".layoutString, typography = BODY_LARGE)
-                                }
-                            )
-                        }
+                        myLayout(this, requestParams.deviceConfiguration)
                     )
                 )
                 .build()
@@ -56,5 +57,25 @@ class MyTileService : TileService() {
         Futures.immediateFuture(
             Resources.Builder().setVersion(RESOURCES_VERSION).build()
         )
+
+    private fun myLayout(
+        context: Context,
+        deviceConfiguration: DeviceParametersBuilders.DeviceParameters,
+    ): LayoutElementBuilders.LayoutElement =
+        materialScope(context, deviceConfiguration) {
+            primaryLayout(
+                margins = PrimaryLayoutMargins.Companion.MIN_PRIMARY_LAYOUT_MARGIN,
+                mainSlot = {
+                    textButton(
+                        onClick = clickable(),
+                        width = expand(),
+                        labelContent = {
+                            text(text = "Hello, World!".layoutString)
+                        }
+                    )
+                }
+            )
+        }
 }
+
 // [END android_wear_m3_tile_mytileservice]

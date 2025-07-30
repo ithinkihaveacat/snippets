@@ -18,7 +18,8 @@ package com.example.wear.snippets.tile
 
 import android.annotation.SuppressLint
 import androidx.annotation.OptIn
-import androidx.wear.protolayout.DeviceParametersBuilders
+import androidx.wear.protolayout.ColorBuilders.argb
+import androidx.wear.protolayout.DimensionBuilders
 import androidx.wear.protolayout.DimensionBuilders.degrees
 import androidx.wear.protolayout.DimensionBuilders.dp
 import androidx.wear.protolayout.LayoutElementBuilders
@@ -28,24 +29,29 @@ import androidx.wear.protolayout.ModifiersBuilders
 import androidx.wear.protolayout.ModifiersBuilders.AnimatedVisibility
 import androidx.wear.protolayout.ModifiersBuilders.DefaultContentTransitions
 import androidx.wear.protolayout.ModifiersBuilders.Modifiers
+import androidx.wear.protolayout.ResourceBuilders.Resources
 import androidx.wear.protolayout.TimelineBuilders.Timeline
 import androidx.wear.protolayout.TypeBuilders.FloatProp
 import androidx.wear.protolayout.expression.AnimationParameterBuilders.AnimationParameters
 import androidx.wear.protolayout.expression.AnimationParameterBuilders.AnimationSpec
 import androidx.wear.protolayout.expression.DynamicBuilders.DynamicFloat
+import androidx.wear.protolayout.expression.PlatformEventSources
 import androidx.wear.protolayout.expression.ProtoLayoutExperimental
 import androidx.wear.protolayout.material.CircularProgressIndicator
 import androidx.wear.protolayout.material.Text
+import androidx.wear.protolayout.material.Typography
 import androidx.wear.protolayout.material.layouts.EdgeContentLayout
+import androidx.wear.protolayout.material3.dynamicColorScheme
 import androidx.wear.tiles.RequestBuilders
+import androidx.wear.tiles.RequestBuilders.ResourcesRequest
 import androidx.wear.tiles.TileBuilders.Tile
 import androidx.wear.tiles.TileService
+import androidx.wear.tiles.manager.TileUiClient
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 
 private const val RESOURCES_VERSION = "1"
 private const val someTileText = "Hello"
-private val deviceParameters = DeviceParametersBuilders.DeviceParameters.Builder().build()
 
 private fun getTileTextToShow(): String {
     return "Some text"
@@ -53,32 +59,32 @@ private fun getTileTextToShow(): String {
 
 /** Demonstrates a sweep transition animation on a [CircularProgressIndicator]. */
 class AnimationSweepTransition : TileService() {
-    // [START android_wear_tile_animations_sweep_transition]
-    private var startValue = 15f
-    private var endValue = 105f
-    private val animationDurationInMillis = 2000L // 2 seconds
 
+    // [START android_wear_tile_animations_sweep_transition]
     override fun onTileRequest(requestParams: RequestBuilders.TileRequest): ListenableFuture<Tile> {
+        // Define the animation specification.
+        val animationSpec = AnimationSpec.Builder()
+            .setAnimationParameters(
+                AnimationParameters.Builder()
+                    .setDurationMillis(2000L) // 2 seconds
+                    .build()
+            )
+            .build()
+
+        // Create a dynamic float that changes from 0.0 to 1.0 when the layout
+        // becomes visible, and apply the animation to that change.
+        val animatedProgress = DynamicFloat
+            .onCondition(PlatformEventSources.isLayoutVisible())
+            .use(1.0f) // Value when visible
+            .elseUse(0.0f) // Value when not visible
+            .animate(animationSpec)
+
+        // Build the indicator, using the animated progress.
         val circularProgressIndicator =
             CircularProgressIndicator.Builder()
                 .setProgress(
-                    FloatProp.Builder(/* static value */ 0.25f)
-                        .setDynamicValue(
-                            // Or you can use some other dynamic object, for example
-                            // from the platform and then at the end of expression
-                            // add animate().
-                            DynamicFloat.animate(
-                                startValue,
-                                endValue,
-                                AnimationSpec.Builder()
-                                    .setAnimationParameters(
-                                        AnimationParameters.Builder()
-                                            .setDurationMillis(animationDurationInMillis)
-                                            .build()
-                                    )
-                                    .build(),
-                            )
-                        )
+                    FloatProp.Builder(0.0f) // Initial static value
+                        .setDynamicValue(animatedProgress)
                         .build()
                 )
                 .build()
@@ -91,6 +97,9 @@ class AnimationSweepTransition : TileService() {
         )
     }
     // [END android_wear_tile_animations_sweep_transition]
+
+    override fun onTileResourcesRequest(requestParams: ResourcesRequest) =
+        Futures.immediateFuture(Resources.Builder().setVersion(RESOURCES_VERSION).build())
 }
 
 /** Demonstrates setting the growth direction of an [Arc] and [ArcLine]. */
@@ -100,35 +109,53 @@ class AnimationArcDirection : TileService() {
     public override fun onTileRequest(
         requestParams: RequestBuilders.TileRequest
     ): ListenableFuture<Tile> {
+        // Define the animation specification.
+        val animationSpec = AnimationSpec.Builder()
+            .setAnimationParameters(
+                AnimationParameters.Builder()
+                    .setDurationMillis(2000L) // 2 seconds
+                    .build()
+            )
+            .build()
+
+        // Create a dynamic float that animates from 0f to 240f.
+        val animatedAngle = DynamicFloat.animate(0f, 240f, animationSpec)
+
+        // Set the dynamic value to the ArcLine's length.
+        val animatedLength = DimensionBuilders.DegreesProp.Builder(0f)
+            .setDynamicValue(animatedAngle)
+            .build()
+
+        val animatedArcLine = ArcLine.Builder()
+            .setLength(animatedLength)
+            .setThickness(dp(6f))
+            .setColor(dynamicColorScheme(this).onPrimaryContainer.prop)
+            .setArcDirection(LayoutElementBuilders.ARC_DIRECTION_CLOCKWISE)
+            .build()
+
+        // The Arc grows counter-clockwise, but the line within it grows
+        // clockwise.
+        val arc = Arc.Builder()
+            .setArcDirection(LayoutElementBuilders.ARC_DIRECTION_COUNTER_CLOCKWISE)
+            .addContent(animatedArcLine)
+            .build()
+
+        val layout = EdgeContentLayout.Builder(requestParams.deviceConfiguration)
+            .setResponsiveContentInsetEnabled(true)
+            .setEdgeContent(arc)
+            .build()
+
         return Futures.immediateFuture(
             Tile.Builder()
                 .setResourcesVersion(RESOURCES_VERSION)
-                .setTileTimeline(
-                    Timeline.fromLayoutElement(
-                        EdgeContentLayout.Builder(deviceParameters)
-                            .setResponsiveContentInsetEnabled(true)
-                            .setEdgeContent(
-                                Arc.Builder()
-                                    // Arc should always grow clockwise.
-                                    .setArcDirection(LayoutElementBuilders.ARC_DIRECTION_CLOCKWISE)
-                                    .addContent(
-                                        ArcLine.Builder()
-                                            // Set color, length, thickness, and more.
-                                            // Arc should always grow clockwise.
-                                            .setArcDirection(
-                                                LayoutElementBuilders.ARC_DIRECTION_CLOCKWISE
-                                            )
-                                            .build()
-                                    )
-                                    .build()
-                            )
-                            .build()
-                    )
-                )
+                .setTileTimeline(Timeline.fromLayoutElement(layout))
                 .build()
         )
     }
     // [END android_wear_tile_animations_set_arc_direction]
+
+    override fun onTileResourcesRequest(requestParams: ResourcesRequest) =
+        Futures.immediateFuture(Resources.Builder().setVersion(RESOURCES_VERSION).build())
 }
 
 /** Demonstrates smooth fade-in and fade-out transitions. */
