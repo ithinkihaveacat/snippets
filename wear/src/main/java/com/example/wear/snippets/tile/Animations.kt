@@ -18,7 +18,6 @@ package com.example.wear.snippets.tile
 
 import android.annotation.SuppressLint
 import androidx.annotation.OptIn
-import androidx.wear.protolayout.ColorBuilders.argb
 import androidx.wear.protolayout.DimensionBuilders
 import androidx.wear.protolayout.DimensionBuilders.degrees
 import androidx.wear.protolayout.DimensionBuilders.dp
@@ -39,14 +38,12 @@ import androidx.wear.protolayout.expression.PlatformEventSources
 import androidx.wear.protolayout.expression.ProtoLayoutExperimental
 import androidx.wear.protolayout.material.CircularProgressIndicator
 import androidx.wear.protolayout.material.Text
-import androidx.wear.protolayout.material.Typography
 import androidx.wear.protolayout.material.layouts.EdgeContentLayout
 import androidx.wear.protolayout.material3.dynamicColorScheme
 import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.RequestBuilders.ResourcesRequest
 import androidx.wear.tiles.TileBuilders.Tile
 import androidx.wear.tiles.TileService
-import androidx.wear.tiles.manager.TileUiClient
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 
