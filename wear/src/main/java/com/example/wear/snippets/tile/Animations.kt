@@ -28,7 +28,6 @@ import androidx.wear.protolayout.ModifiersBuilders
 import androidx.wear.protolayout.ModifiersBuilders.AnimatedVisibility
 import androidx.wear.protolayout.ModifiersBuilders.DefaultContentTransitions
 import androidx.wear.protolayout.ModifiersBuilders.Modifiers
-import androidx.wear.protolayout.ResourceBuilders.Resources
 import androidx.wear.protolayout.TimelineBuilders.Timeline
 import androidx.wear.protolayout.TypeBuilders.FloatProp
 import androidx.wear.protolayout.expression.AnimationParameterBuilders.AnimationParameters
@@ -41,7 +40,6 @@ import androidx.wear.protolayout.material.Text
 import androidx.wear.protolayout.material.layouts.EdgeContentLayout
 import androidx.wear.protolayout.material3.dynamicColorScheme
 import androidx.wear.tiles.RequestBuilders
-import androidx.wear.tiles.RequestBuilders.ResourcesRequest
 import androidx.wear.tiles.TileBuilders.Tile
 import androidx.wear.tiles.TileService
 import com.google.common.util.concurrent.Futures
@@ -88,18 +86,15 @@ class AnimationSweepTransition : TileService() {
 
         return Futures.immediateFuture(
             Tile.Builder()
-                .setResourcesVersion(RESOURCES_VERSION)
                 .setTileTimeline(Timeline.fromLayoutElement(circularProgressIndicator))
                 .build()
         )
     }
     // [END android_wear_tile_animations_sweep_transition]
-
-    override fun onTileResourcesRequest(requestParams: ResourcesRequest) =
-        Futures.immediateFuture(Resources.Builder().setVersion(RESOURCES_VERSION).build())
 }
 
 /** Demonstrates setting the growth direction of an [Arc] and [ArcLine]. */
+@OptIn(ProtoLayoutExperimental::class)
 @SuppressLint("RestrictedApi")
 class AnimationArcDirection : TileService() {
     // [START android_wear_tile_animations_set_arc_direction]
@@ -115,8 +110,13 @@ class AnimationArcDirection : TileService() {
             )
             .build()
 
-        // Create a dynamic float that animates from 0f to 240f.
-        val animatedAngle = DynamicFloat.animate(0f, 240f, animationSpec)
+        // Create a dynamic float that changes from 0f to 240f when the layout
+        // becomes visible, and apply the animation to that change.
+        val animatedAngle = DynamicFloat
+            .onCondition(PlatformEventSources.isLayoutVisible())
+            .use(240f)
+            .elseUse(0f)
+            .animate(animationSpec)
 
         // Set the dynamic value to the ArcLine's length.
         val animatedLength = DimensionBuilders.DegreesProp.Builder(0f)
@@ -144,15 +144,11 @@ class AnimationArcDirection : TileService() {
 
         return Futures.immediateFuture(
             Tile.Builder()
-                .setResourcesVersion(RESOURCES_VERSION)
                 .setTileTimeline(Timeline.fromLayoutElement(layout))
                 .build()
         )
     }
     // [END android_wear_tile_animations_set_arc_direction]
-
-    override fun onTileResourcesRequest(requestParams: ResourcesRequest) =
-        Futures.immediateFuture(Resources.Builder().setVersion(RESOURCES_VERSION).build())
 }
 
 /** Demonstrates smooth fade-in and fade-out transitions. */
