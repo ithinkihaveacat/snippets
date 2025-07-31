@@ -22,6 +22,7 @@ import androidx.wear.protolayout.DimensionBuilders
 import androidx.wear.protolayout.DimensionBuilders.degrees
 import androidx.wear.protolayout.DimensionBuilders.dp
 import androidx.wear.protolayout.LayoutElementBuilders
+import androidx.wear.protolayout.LayoutElementBuilders.ARC_ANCHOR_START
 import androidx.wear.protolayout.LayoutElementBuilders.Arc
 import androidx.wear.protolayout.LayoutElementBuilders.ArcLine
 import androidx.wear.protolayout.ModifiersBuilders
@@ -40,10 +41,6 @@ import androidx.wear.protolayout.material.Text
 import androidx.wear.protolayout.material.layouts.EdgeContentLayout
 import androidx.wear.protolayout.material3.circularProgressIndicator
 import androidx.wear.protolayout.material3.dynamicColorScheme
-import androidx.wear.protolayout.material3.materialScope
-import androidx.wear.protolayout.material3.primaryLayout
-import androidx.wear.protolayout.material3.text
-import androidx.wear.protolayout.types.layoutString
 import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.TileBuilders.Tile
 import androidx.wear.tiles.TileService
@@ -115,19 +112,20 @@ class AnimationArcDirection : TileService() {
             )
             .build()
 
-        // Create a dynamic float that changes from 0f to 240f when the layout
-        // becomes visible, and apply the animation to that change.
+        // Create a dynamic float that changes from 0f to 240f every time the layout
+        // becomes visible
         val animatedAngle = DynamicFloat
             .onCondition(PlatformEventSources.isLayoutVisible())
             .use(240f)
             .elseUse(0f)
             .animate(animationSpec)
 
-        // Set the dynamic value to the ArcLine's length.
+        // Convert the dynamic float to a (dynamic) length
         val animatedLength = DimensionBuilders.DegreesProp.Builder(0f)
             .setDynamicValue(animatedAngle)
             .build()
 
+        // Create an arc line with a dynamic (i.e. animated) length
         val animatedArcLine = ArcLine.Builder()
             .setLength(animatedLength)
             .setThickness(dp(6f))
@@ -135,10 +133,9 @@ class AnimationArcDirection : TileService() {
             .setArcDirection(LayoutElementBuilders.ARC_DIRECTION_CLOCKWISE)
             .build()
 
-        // The Arc grows counter-clockwise, but the line within it grows
-        // clockwise.
         val arc = Arc.Builder()
-            .setArcDirection(LayoutElementBuilders.ARC_DIRECTION_COUNTER_CLOCKWISE)
+            .setAnchorType(ARC_ANCHOR_START)
+            .setArcDirection(LayoutElementBuilders.ARC_DIRECTION_CLOCKWISE)
             .addContent(animatedArcLine)
             .build()
 
