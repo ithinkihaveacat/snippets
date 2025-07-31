@@ -38,7 +38,12 @@ import androidx.wear.protolayout.expression.ProtoLayoutExperimental
 import androidx.wear.protolayout.material.CircularProgressIndicator
 import androidx.wear.protolayout.material.Text
 import androidx.wear.protolayout.material.layouts.EdgeContentLayout
+import androidx.wear.protolayout.material3.circularProgressIndicator
 import androidx.wear.protolayout.material3.dynamicColorScheme
+import androidx.wear.protolayout.material3.materialScope
+import androidx.wear.protolayout.material3.primaryLayout
+import androidx.wear.protolayout.material3.text
+import androidx.wear.protolayout.types.layoutString
 import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.TileBuilders.Tile
 import androidx.wear.tiles.TileService
@@ -164,7 +169,6 @@ class AnimationFadeTransition : TileService() {
         val tileText = getTileTextToShow()
         return Futures.immediateFuture(
             Tile.Builder()
-                .setResourcesVersion(RESOURCES_VERSION)
                 .setTileTimeline(
                     Timeline.fromLayoutElement(
                         Text.Builder(this, tileText)
