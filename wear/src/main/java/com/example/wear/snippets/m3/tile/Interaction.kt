@@ -16,12 +16,11 @@
 
 package com.example.wear.snippets.m3.tile
 
+import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Intent
 import androidx.core.app.TaskStackBuilder
 import androidx.core.net.toUri
-import androidx.wear.protolayout.ActionBuilders
-import androidx.wear.protolayout.ActionBuilders.launchAction
 import androidx.wear.protolayout.LayoutElementBuilders
 import androidx.wear.protolayout.ResourceBuilders.Resources
 import androidx.wear.protolayout.TimelineBuilders.Timeline
@@ -32,6 +31,7 @@ import androidx.wear.protolayout.expression.stringAppDataKey
 import androidx.wear.protolayout.material3.MaterialScope
 import androidx.wear.protolayout.material3.Typography.BODY_LARGE
 import androidx.wear.protolayout.material3.materialScope
+import androidx.wear.protolayout.material3.materialScopeWithResources
 import androidx.wear.protolayout.material3.primaryLayout
 import androidx.wear.protolayout.material3.text
 import androidx.wear.protolayout.material3.textButton
@@ -59,7 +59,7 @@ abstract class BaseTileService : TileService() {
                 .setResourcesVersion(RESOURCES_VERSION)
                 .setTileTimeline(
                     Timeline.fromLayoutElement(
-                        materialScope(this, requestParams.deviceConfiguration) {
+                        materialScopeWithResources(this, requestParams.scope, requestParams.deviceConfiguration) {
                             tileLayout(requestParams)
                         }
                     )
@@ -253,19 +253,28 @@ class InteractionLaunchAction : BaseTileService() {
                         text("launchAction()".layoutString, typography = BODY_LARGE)
                     },
                     onClick =
-                    clickable(
-                        action =
-                        launchAction(
-                            ComponentName(
+                    run {
+                        val intent = Intent().apply {
+                            component = ComponentName(
                                 "com.example.wear",
-                                "com.example.wear.snippets.m3.tile.TileActivity",
-                            ),
-                            mapOf(
-                                "name" to ActionBuilders.stringExtra("Bartholomew"),
-                                "age" to ActionBuilders.intExtra(21),
-                            ),
+                                "com.example.wear.snippets.m3.tile.TileActivity"
+                            )
+                            putExtra("name", "Bartholomew")
+                            putExtra("age", 21)
+                        }
+
+                        val pendingIntent = PendingIntent.getActivity(
+                            context,
+                            0, // requestCode
+                            intent,
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                         )
-                    ),
+
+                        protoLayoutScope!!.clickable(
+                            id = "launch_activity",
+                            pendingIntent = pendingIntent
+                        )
+                    }
                 )
                 // [END android_wear_m3_interactions_launchaction]
             }
