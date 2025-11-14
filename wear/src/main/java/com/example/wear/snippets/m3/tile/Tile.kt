@@ -18,6 +18,7 @@ package com.example.wear.snippets.m3.tile
 
 import android.content.Context
 import androidx.wear.protolayout.LayoutElementBuilders
+import androidx.wear.protolayout.LayoutElementBuilders.Column
 import androidx.wear.protolayout.ResourceBuilders.Resources
 import androidx.wear.protolayout.StateBuilders
 import androidx.wear.protolayout.TimelineBuilders.Timeline
@@ -27,6 +28,7 @@ import androidx.wear.protolayout.expression.intAppDataKey
 import androidx.wear.protolayout.expression.stringAppDataKey
 import androidx.wear.protolayout.material3.MaterialScope
 import androidx.wear.protolayout.material3.Typography.BODY_LARGE
+import androidx.wear.protolayout.material3.Typography.BODY_MEDIUM
 import androidx.wear.protolayout.material3.button
 import androidx.wear.protolayout.material3.buttonGroup
 import androidx.wear.protolayout.material3.materialScope
@@ -34,6 +36,8 @@ import androidx.wear.protolayout.material3.primaryLayout
 import androidx.wear.protolayout.material3.text
 import androidx.wear.protolayout.modifiers.clickable
 import androidx.wear.protolayout.types.LayoutString
+import androidx.wear.protolayout.types.asLayoutConstraint
+import androidx.wear.protolayout.types.asLayoutString
 import androidx.wear.protolayout.types.layoutString
 import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.RequestBuilders.ResourcesRequest
@@ -180,8 +184,16 @@ class StateTile : TileService() {
         val keyWaterIntake = requestParams.currentState.stateMap[KEY_WATER_INTAKE] ?: 0
         val keyNote = requestParams.currentState.stateMap[KEY_NOTE] ?: ""
         return primaryLayout(mainSlot = {
-            val foo = DynamicBuilders.DynamicInt32.from(KEY_WATER_INTAKE) // HELPME: how to display foo?
-            text("Hello, World".layoutString)
+            val waterIntakeValue = DynamicBuilders.DynamicInt32.from(KEY_WATER_INTAKE)
+                .format()
+                .asLayoutString("0", "000".asLayoutConstraint())
+            val noteValue = DynamicBuilders.DynamicString.from(KEY_NOTE)
+                .asLayoutString("", "Note about day".asLayoutConstraint())
+
+            Column.Builder()
+                .addContent(text(waterIntakeValue, typography = BODY_LARGE))
+                .addContent(text(noteValue, typography = BODY_MEDIUM))
+                .build()
         })
     }
     companion object {
