@@ -17,8 +17,13 @@
 package com.example.wear.snippets.m3.tile
 
 import android.content.Context
+import androidx.wear.protolayout.LayoutElementBuilders
 import androidx.wear.protolayout.ResourceBuilders.Resources
+import androidx.wear.protolayout.StateBuilders
 import androidx.wear.protolayout.TimelineBuilders.Timeline
+import androidx.wear.protolayout.expression.DynamicDataBuilders
+import androidx.wear.protolayout.expression.intAppDataKey
+import androidx.wear.protolayout.expression.stringAppDataKey
 import androidx.wear.protolayout.material3.MaterialScope
 import androidx.wear.protolayout.material3.Typography.BODY_LARGE
 import androidx.wear.protolayout.material3.button
@@ -37,6 +42,7 @@ import androidx.wear.tiles.tooling.preview.TilePreviewData
 import androidx.wear.tiles.tooling.preview.TilePreviewHelper
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
 
 private const val RESOURCES_VERSION = "1"
 
@@ -139,3 +145,45 @@ fun smallPreview(context: Context) = TilePreviewData {
         .build()
 }
 // [END android_wear_tile_preview]
+
+class StateTile : TileService() {
+    override fun onTileRequest(requestParams: RequestBuilders.TileRequest): ListenableFuture<Tile?> {
+        val state = StateBuilders.State.Builder()
+            .addKeyToValueMapping(
+                KEY_WATER_INTAKE,
+                DynamicDataBuilders.DynamicDataValue.fromInt(200)
+            )
+            .addKeyToValueMapping(
+                KEY_NOTE,
+                DynamicDataBuilders.DynamicDataValue.fromString("Note about day")
+            )
+            .build()
+
+        return Futures.immediateFuture(
+            Tile.Builder()
+                // Set resources, timeline, and other tile properties.
+                .setTileTimeline(
+                    Timeline.fromLayoutElement(
+                        materialScope(this, requestParams.deviceConfiguration) {
+                            tileLayout(requestParams)
+                        }
+                    )
+                )
+                .setState(state)
+                .build()
+        )
+    }
+
+    fun MaterialScope.tileLayout(requestParams: RequestBuilders.TileRequest): LayoutElementBuilders.LayoutElement {
+        val keyWaterIntake = requestParams.currentState.stateMap[KEY_WATER_INTAKE] ?: 0
+        val keyNote = requestParams.currentState.stateMap[KEY_NOTE] ?: ""
+        return primaryLayout(mainSlot = {
+            // HELPME
+            text(keyNote.layoutString)
+        })
+    }
+    companion object {
+        val KEY_WATER_INTAKE = intAppDataKey("key_water_intake")
+        val KEY_NOTE = stringAppDataKey("key_note")
+    }
+}
